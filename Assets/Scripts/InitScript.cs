@@ -26,6 +26,12 @@ public class InitScript : MonoBehaviour {
 	string runfirst;
 	string runsecond;
 	
+	public static float a;
+	public static float b;
+	public static int c = 0;
+	public static GameObject what;
+	public static Vector3 atwhere;
+	
 	public GameObject prefabobj;
 	public GameObject prefabchar;
 	public GameObject prefabmark;
@@ -83,7 +89,12 @@ public class InitScript : MonoBehaviour {
 	static string miniinputFileName = Application.dataPath + @"//Files//miniInputFile.txt";
 	static string minibmlFileName = Application.dataPath + @"//Files//miniBMLFile.txt";
 */	static StringReader inputFile = null;
+	static StringReader playscript = null;
+	static string playscripttext = null;
+	static StringReader numLines = null;
 	static string dataPath = "";
+	
+	static bool initializing = true;
 	
 	// variables for legend
 	public  Texture hamletT;
@@ -98,6 +109,10 @@ public class InitScript : MonoBehaviour {
 	public  Texture scriptBkgrd;
 	
 	public static Texture legendTexture;
+	
+	public GUIStyle alertstyle; // for alert message box
+	public GUIStyle boxstyle; // for highlight box
+	public GUIStyle scriptstyle; // for playscript text
 	
 	public float startx1 = 5f;
 	public float startx2 = 110f;
@@ -124,6 +139,8 @@ public class InitScript : MonoBehaviour {
 	static Texture2D mytexture3;
 	static GUIStyle newstyle;
 	static GUIStyle buttonstyle;
+	
+
 	
 	static bool wait = false;
 	static float wtimer = 0.0f;
@@ -230,10 +247,39 @@ public class InitScript : MonoBehaviour {
 		
 		legendTexture = Resources.Load ("Textures/ErnestLegend") as Texture;
 		
+		// initialize click log file
+		using(System.IO.StreamWriter myFile = new System.IO.StreamWriter(dataPath + @"//Logs//"+logFile+"click.log", true)) {
+			
+			myFile.WriteLine("Time\tMouse Click X\tMouse Click Y\tName of Object Clicked On\tFloor Location X\tFloor Location Z\tWhat Option Chosen from Menu");
+				
+		}
+		
+		// initialize character position log files
+		foreach(GameObject c in GlobalObjs.listOfCharObj) {
+			using(System.IO.StreamWriter myFile = new System.IO.StreamWriter(dataPath + @"//Logs//"+logFile+c.name+".log", true)) {
+				
+				myFile.WriteLine("Time\tX Position\tZ Position\tY Rotation Euler Angle");
+					
+			}
+				
+		}
+		
 	}
 	
 	// Update is called once per frame
 	void Update () {
+		
+		// update box positions for playscript
+		if (GlobalObjs.currentTopAllText != GlobalObjs.targetTopAllText) {
+			// increment both the currentTopAllText and the boxTop by delta time amount
+			float incamt = 25f * Time.deltaTime;
+			if (GlobalObjs.currentTopAllText - incamt < GlobalObjs.targetTopAllText) {
+				incamt = -1*(GlobalObjs.targetTopAllText - GlobalObjs.currentTopAllText);
+			}
+			GlobalObjs.currentTopAllText -= incamt;
+			GlobalObjs.boxTop -=incamt;
+		}
+		//Debug.Log("curTop = "+GlobalObjs.currentTopAllText+", targetTop="+GlobalObjs.targetTopAllText+", boxTop="+GlobalObjs.boxTop+", boxHeight="+GlobalObjs.boxHeight);
 		
 		if (starting) {
 			
@@ -370,18 +416,238 @@ public class InitScript : MonoBehaviour {
 		// **************************************
 			if (started) {
 				// show nothing
-			
-				if (!GlobalObjs.humanfunc.speaking) {
-					// show Speak GUI button
-					GUI.backgroundColor = Color.yellow;
-					
-					if (GUI.Button (new Rect(1275, 660, 120, 30), "Speak Next Line")) {
-						// say next line
-						GlobalObjs.humanfunc.doSpeak (GlobalObjs.humanfunc.mynextline);
-					
+				if (GlobalObjs.ready) {
+					if (GlobalObjs.hasspeech) {
+						// show Speak GUI button
+						GUI.backgroundColor = Color.yellow;
+						
+						if (GUI.Button (new Rect(1275, 660, 120, 30), "Speak Next Line")) {
+							// say next line
+							c = 0;
+							GlobalObjs.ready = false;
+							GlobalObjs.humanfunc.doSpeak (GlobalObjs.humanfunc.mynextline);
+							GlobalObjs.hasspeech = false;
+						}
+					} else {
+						GUI.backgroundColor = Color.yellow;
+						if (GUI.Button (new Rect(1275, 660, 120, 30), "Next")) {
+							// do next section / read line
+							callNextStep();
+						}
 					}
 				}
+			
+				// show the playscript
+				GUI.BeginGroup(new Rect(0,660, 1440, 225));
+					GUI.backgroundColor = Color.clear;
+					GUI.Label(new Rect(5, GlobalObjs.currentTopAllText,1440, 2000), playscripttext, scriptstyle);
+					GUI.backgroundColor = Color.yellow;
+					GUI.Box(new Rect(0, GlobalObjs.boxTop, 1240, GlobalObjs.boxHeight), "", boxstyle); // make transparent yellow?
 				
+				GUI.EndGroup ();
+			
+				// show the warning message if true
+				if (GlobalObjs.showwarning) {
+					GUI.backgroundColor = Color.yellow;
+					GUI.Box(new Rect(100, 640, 300, 23), "Miss Prism has an action for this part.", alertstyle);
+				}
+			
+				// show context menu - 1, 2, 3, or 4 options
+				if (c != 0) {
+					GlobalObjs.ready = false;
+					GUI.BeginGroup (new Rect(a, Screen.height - b, 100, 35*(c+1)));
+						switch (c) {
+							case 1:
+								if(GUI.Button(new Rect(0,0, 100, 30), "Put Down")) {
+									// put down object holding
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Put Down");
+									GlobalObjs.humanfunc.doPutDown(what);
+									// clear menu
+									c = 0;
+								}
+								if(GUI.Button(new Rect(0,35, 100, 30), "Cancel")) {
+									// cancel menu
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Cancel");
+									c = 0;
+									GlobalObjs.ready = true;
+								}
+						
+								break;
+							case 2:
+								if(GUI.Button(new Rect(0,0, 100, 30), "Point At")) {
+									// put down object holding
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Point At");
+									if (what.tag == "Floor") {
+										// create a temporary object at atwhere to point to
+										GameObject mark = (GameObject)Instantiate (InitScript.Instance.prefabmark, new Vector3(atwhere.x, -0.9f, atwhere.z), new Quaternion(0,0,0,0));
+										mark.name = "Delete Point At";
+										mark.tag = "Delete";
+										mark.renderer.material.color = Color.clear;
+										GlobalObjs.humanfunc.doPoint (mark);
+										
+									} else {
+										GlobalObjs.humanfunc.doPoint(what);
+									}
+									// clear menu
+									c = 0;
+								}
+								if(GUI.Button(new Rect(0,35, 100, 30), "Look At")) {
+									// put down object holding
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Look At");
+									if (what.tag == "Floor") {
+										// create a temporary object at atwhere to look at
+										
+										GameObject mark = (GameObject)Instantiate (InitScript.Instance.prefabmark, new Vector3(atwhere.x, -0.9f, atwhere.z), new Quaternion(0,0,0,0));
+										mark.tag = "Delete";
+										mark.name = "Delete Look At";
+										mark.renderer.material.color = Color.clear;
+										GlobalObjs.humanfunc.doRotate (mark.transform.position.x, mark.transform.position.z, mark);
+									} else {
+										GlobalObjs.humanfunc.doRotate(what.transform.position.x, what.transform.position.z, what);
+									}
+									// clear menu
+									c = 0;
+								}
+								if(GUI.Button(new Rect(0,70, 100, 30), "Cancel")) {
+									// cancel menu
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Cancel");
+									c = 0;
+									GlobalObjs.ready = true;
+								}
+								break;
+							case 3:
+								if(GUI.Button(new Rect(0,0, 100, 30), "Point At")) {
+									// put down object holding
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Point At");
+									if (what.tag == "Floor") {
+										// create a temporary object at atwhere to point to
+										// create a temporary object at atwhere to point to
+										GameObject mark = (GameObject)Instantiate (InitScript.Instance.prefabmark, new Vector3(atwhere.x, -0.9f, atwhere.z), new Quaternion(0,0,0,0));
+										mark.tag = "Delete";
+										mark.name = "Delete Point At";
+										mark.renderer.material.color = Color.clear;
+										GlobalObjs.humanfunc.doPoint (mark);
+									} else {
+										GlobalObjs.humanfunc.doPoint(what);
+									}
+									// clear menu
+									c = 0;
+								}
+								if(GUI.Button(new Rect(0,35, 100, 30), "Look At")) {
+									// put down object holding
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Look At");
+									if (what.tag == "Floor") {
+										// create a temporary object at atwhere to look at
+										
+										GameObject mark = (GameObject)Instantiate (InitScript.Instance.prefabmark, new Vector3(atwhere.x, -0.9f, atwhere.z), new Quaternion(0,0,0,0));
+										mark.tag = "Delete";
+										mark.name = "Delete Look At";
+										mark.renderer.material.color = Color.clear;
+										GlobalObjs.humanfunc.doRotate (mark.transform.position.x, mark.transform.position.z, mark);
+									
+									} else {
+										GlobalObjs.humanfunc.doRotate(what.transform.position.x, what.transform.position.z, what);
+									}
+									// clear menu
+									c = 0;
+								}
+								if(GUI.Button(new Rect(0,70, 100, 30), "Go To")) {
+									// put down object holding
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Go To");
+									if (what.tag == "Floor") {
+										// create a temporary object at atwhere to go to
+										
+										GameObject mark = (GameObject)Instantiate (InitScript.Instance.prefabmark, new Vector3(atwhere.x, -0.9f, atwhere.z), new Quaternion(0,0,0,0));
+										mark.tag = "Delete";
+										mark.name = "Delete Walk To";
+										mark.renderer.material.color = Color.clear;
+										GlobalObjs.humanfunc.doWalk (mark.transform.position.x, mark.transform.position.z, mark, false);
+									
+									} else {
+										GlobalObjs.humanfunc.doWalk(what.transform.position.x, what.transform.position.z, what, false);
+									}
+									// clear menu
+									c = 0;
+								}
+								if(GUI.Button(new Rect(0,105, 100, 30), "Cancel")) {
+									// cancel menu
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Cancel");
+									c = 0;
+									GlobalObjs.ready = true;
+								}
+								break;
+							case 4:
+								if(GUI.Button(new Rect(0,0, 100, 30), "Point At")) {
+									// put down object holding
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Point At");
+									if (what.tag == "Floor") {
+										// create a temporary object at atwhere to point to
+										GameObject mark = (GameObject)Instantiate (InitScript.Instance.prefabmark, new Vector3(atwhere.x, -0.9f, atwhere.z), new Quaternion(0,0,0,0));
+										mark.tag = "Delete";
+										mark.name = "Delete Point At";
+										mark.renderer.material.color = Color.clear;
+										GlobalObjs.humanfunc.doPoint (mark);
+									} else {
+										GlobalObjs.humanfunc.doPoint(what);
+									}
+									// clear menu
+									c = 0;
+								}
+								if(GUI.Button(new Rect(0,35, 100, 30), "Look At")) {
+									// put down object holding
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Look At");
+									if (what.tag == "Floor") {
+										// create a temporary object at atwhere to look at
+										
+										GameObject mark = (GameObject)Instantiate (InitScript.Instance.prefabmark, new Vector3(atwhere.x, -0.9f, atwhere.z), new Quaternion(0,0,0,0));
+										mark.tag = "Delete";
+										mark.name = "Delete Look At";
+										mark.renderer.material.color = Color.clear;
+										GlobalObjs.humanfunc.doRotate (mark.transform.position.x, mark.transform.position.z, mark);
+									
+									} else {
+										GlobalObjs.humanfunc.doRotate(what.transform.position.x, what.transform.position.z, what);
+									}
+									// clear menu
+									c = 0;
+								}
+								if(GUI.Button(new Rect(0,70, 100, 30), "Go To")) {
+									// put down object holding
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Go To");
+									if (what.tag == "Floor") {
+										// create a temporary object at atwhere to go to
+										
+										GameObject mark = (GameObject)Instantiate (InitScript.Instance.prefabmark, new Vector3(atwhere.x, -0.9f, atwhere.z), new Quaternion(0,0,0,0));
+										mark.tag = "Delete";
+										mark.name = "Delete Walk To";
+										mark.renderer.material.color = Color.clear;
+										GlobalObjs.humanfunc.doWalk (mark.transform.position.x, mark.transform.position.z, mark, false);
+									
+									} else {
+										GlobalObjs.humanfunc.doWalk(what.transform.position.x, what.transform.position.z, what, false);
+									}
+									// clear menu
+									c = 0;
+								}
+								if(GUI.Button(new Rect(0,105, 100, 30), "Go & Pickup")) {
+									// put down object holding
+										LogClicks (a, b, what, atwhere.x, atwhere.y, "Go & Pickup");
+										GlobalObjs.humanfunc.doWalk (what.transform.position.x, what.transform.position.z, what, false);
+										GlobalObjs.humanfunc.doPickup(what);
+									
+									// clear menu
+									c = 0;
+								}
+								if(GUI.Button(new Rect(0,140, 100, 30), "Cancel")) {
+									// cancel menu
+									LogClicks (a, b, what, atwhere.x, atwhere.y, "Cancel");
+									c = 0;
+									GlobalObjs.ready = true;
+								}
+								break;
+						}
+					GUI.EndGroup ();
+				}
 			
 			
 		// **************************************
@@ -404,7 +670,7 @@ public class InitScript : MonoBehaviour {
 						instructionText = instructionText + "The play-script for the scene you are performing will appear in the 'SCRIPT' section below, \nand the legend for the characters and objects can be seen to the right.\n";
 						instructionText = instructionText + "\n";
 						instructionText = instructionText + "\n";
-						instructionText = instructionText + "To perform in the scene, you will use the mouse to move, look, point, or pickup objects.  \nYou will click the speak button on the 'Legend' area to say your next line.\n";
+						instructionText = instructionText + "To perform in the scene, you will use the mouse to move, look, point, or pickup/putdown objects.  \nYou will click the 'Next' button below the 'Legend' area to start the next block of the play.\n";
 						instructionText = instructionText + "\n";
 						instructionText = instructionText + "\n";
 						instructionText = instructionText + "To MOVE:\n";
@@ -414,17 +680,20 @@ public class InitScript : MonoBehaviour {
 						instructionText = instructionText + "Left-click your mouse on the spot, person, or object you wish to look at.  You will see a menu, choose 'Look At'.\n";
 						instructionText = instructionText + "\n";
 						instructionText = instructionText + "To POINT:\n";
-						instructionText = instructionText + "Left-click your mouse on the spot, person, or object you wish to point at.  You will see a menu, choose 'Point To'.\n";
+						instructionText = instructionText + "Left-click your mouse on the spot, person, or object you wish to point at.  You will see a menu, choose 'Point At'.\n";
 						instructionText = instructionText + "\n";
 						instructionText = instructionText + "To PICK-UP:\n";
-						instructionText = instructionText + "Left-click your mouse on the object you wish to walk to and pick up.  You will see a menu, choose 'Pick Up'.\n";
+						instructionText = instructionText + "Left-click your mouse on the object you wish to walk to and pick up.  You will see a menu, choose 'Go & Pickup'.\n";
+						instructionText = instructionText + "\n";
+						instructionText = instructionText + "To PUT-DOWN:\n";
+						instructionText = instructionText + "Left-click your mouse on the object you wish to put down OR on MISS PRISM.  You will see a menu, choose 'Put Down'.\n";
 						instructionText = instructionText + "\n";
 						instructionText = instructionText + "To SPEAK:\n";
-						instructionText = instructionText + "Click the button on the right that says 'Speak'.  You will then say your next line in the script.\n";
+						instructionText = instructionText + "Click the button on the bottom right that says 'Speak Next Line'.  This button will only show when the current block is Miss Prism speaking.\n";
 						instructionText = instructionText + "\n";
 						instructionText = instructionText + "\n";
 						instructionText = instructionText + "You will have one practice session to try these actions out before performing in the 'real' sessions.\n";
-						instructionText = instructionText + "You can practice as long as you feel is necessary, just click the 'Done Practicing' button when you are comfortable.\n";
+						//instructionText = instructionText + "You can practice as long as you feel is necessary, just click the 'Done Practicing' button when you are comfortable.\n";
 						
 						instructionText = instructionText + "\n";
 						instructionText = instructionText + "\n";
@@ -679,7 +948,7 @@ public class InitScript : MonoBehaviour {
 					
 					// show participant id
 					GUI.Label (new Rect(50, 100, 250, 30), "Participant ID:  " + participantID, buttonstyle);
-					GUI.Label (new Rect(250, 100, 250, 30), "Scene:  " + Application.loadedLevel, buttonstyle);
+					GUI.Label (new Rect(250, 100, 250, 30), "Scene:  " + Application.loadedLevel + (runfirst == "FDGScene"?((scenecount == 1)?"F":"N"):((scenecount == 1)?"N":"F")), buttonstyle);
 					
 					
 					// show survey launch
@@ -696,6 +965,34 @@ public class InitScript : MonoBehaviour {
 						System.Diagnostics.Process.Start("Notes.app");
 					}
 					
+				
+				// Instructions
+					GUI.backgroundColor = Color.black;
+					GUI.BeginGroup (new Rect(400,50, 800, 550)); // 500 & 730
+						GUI.DrawTexture(new Rect(0,0,800,550),scriptBkgrd,ScaleMode.StretchToFill,true);
+						mystyle.fontSize = 20;
+						mystyle.normal.textColor = Color.white;
+						GUI.Label (new Rect(5,0,1000,100), "INSTRUCTIONS:", mystyle);
+						mystyle.fontSize = 12;
+						string instructionText = "Please complete the TLX survey and the SurveyGizmo survey for the scene you just performed.\n";
+						instructionText = instructionText + "\n";
+						instructionText = instructionText + "\n";
+						instructionText = instructionText + "\n";
+						instructionText = instructionText + "\n";
+						instructionText = instructionText + "\n";
+						instructionText = instructionText + "\n";
+						instructionText = instructionText + "\n";
+						instructionText = instructionText + "\n";
+						//instructionText = instructionText + "You can practice as long as you feel is necessary, just click the 'Done Practicing' button when you are comfortable.\n";
+						
+						instructionText = instructionText + "\n";
+						instructionText = instructionText + "\n";
+						instructionText = instructionText + "Once you have completed both surveys, please click the 'Start Session' button on the left.\n";
+						instructionText = instructionText + "\n";
+						instructionText = instructionText + "\n";
+
+						GUI.Label (new Rect(5, 40, 550, 350), instructionText, mystyle);
+					GUI.EndGroup ();
 				//GUI.EndGroup ();
 			} else {
 					
@@ -725,7 +1022,7 @@ public class InitScript : MonoBehaviour {
 				
 				if (GUI.Button (new Rect(50, 250, 100, 30), "Start Session")) {
 					Debug.Log ("Starting Play "+Time.time);	
-					
+					c = 0;
 					if (scenecount == 0) {
 						scene = "PracticeScene";
 						scenecount++; 
@@ -827,12 +1124,12 @@ public class InitScript : MonoBehaviour {
 		}
 	}
 	
-	public static void LogClicks(float x, float y, GameObject g, string option) {
+	public static void LogClicks(float x, float y, GameObject g, float w, float z, string option) {
 		DateTime timeSpan = System.DateTime.Now;
  		string timeText = timeSpan.ToString();//string.Format("{0:D2}:{1:D2}:{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
 		using(System.IO.StreamWriter myFile = new System.IO.StreamWriter(dataPath + @"//Logs//"+logFile+"click.log", true)) {
 			
-			myFile.WriteLine(timeText+"\t"+x+"\t"+y+"\t"+((g == null)?("none"):(g.name))+"\t"+option);
+			myFile.WriteLine(timeText+"\t"+x+"\t"+y+"\t"+((g == null)?("none"):(g.name))+"\t"+w+"\t"+z+"\t"+option);
 				
 		}
 	}
@@ -848,6 +1145,8 @@ public class InitScript : MonoBehaviour {
 		started = true;
 		string myfilename;
 		string myshortname;
+		TextAsset scriptFile;
+		TextAsset nfFile;
 		switch (Application.loadedLevel) {
 		//switch (EditorApplication.currentScene) {
 		//case "Assets/Scenes/FDGScene.unity": // nlp version - no forces
@@ -855,28 +1154,40 @@ public class InitScript : MonoBehaviour {
 			myfilename =  @"Files/ErnestScriptNLP";
 			myshortname = "FDG";
 			indexNumber = 4;
+			scriptFile = (TextAsset)Resources.Load (@"Files/ErnestScriptText");
+			nfFile = (TextAsset)Resources.Load (@"Files/ErnestNumLines");
 			break;
 		case 0:
 		//case "Assets/Scenes/PracticeScene.unity": // practice - do no movement
 			myfilename =  @"Files/Practice";
 			myshortname = "Practice";
 			indexNumber = 0;
+			scriptFile = (TextAsset)Resources.Load (@"Files/PracticeScript");
+			nfFile = (TextAsset)Resources.Load (@"Files/PracticeNumLines");
 			break;
 		case 2:
 		//case "Assets/Scenes/NLPScene.unity":
 			myfilename =  @"Files/ErnestScriptNLP";
 			myshortname = "NLP";
 			indexNumber = 5;
+			scriptFile = (TextAsset)Resources.Load (@"Files/ErnestScriptText");
+			nfFile = (TextAsset)Resources.Load (@"Files/ErnestNumLines");
 			break;
 		default:
 			myfilename =  @"Files/ErnestScriptNLP";
 			myshortname = "Other";
 			indexNumber = 4;
+			scriptFile = (TextAsset)Resources.Load (@"Files/ErnestScriptText");
+			nfFile = (TextAsset)Resources.Load (@"Files/ErnestNumLines");
 			break;
 			
 		}
 		TextAsset textFile = (TextAsset)Resources.Load (myfilename);
 		inputFile = new StringReader (textFile.text);
+		playscript = new StringReader(scriptFile.text);
+		playscripttext = playscript.ReadToEnd();
+		numLines = new StringReader(nfFile.text);
+		initializing = true;
 			
 		
 		DateTime timeSpan = System.DateTime.Now;
@@ -1072,7 +1383,9 @@ public class InitScript : MonoBehaviour {
 		Debug.Log ("pausing");
 		if (pauseamt >= pausemax) {
 			Debug.Log ("pauseamt enough");
-			callNextStep();
+			// show the button for next instead of calling next step?
+			GlobalObjs.ready = true;
+			//		callNextStep();
 		} else {
 			pauseamt += Time.deltaTime;
 			//pausesome ();
@@ -1082,11 +1395,51 @@ public class InitScript : MonoBehaviour {
 	public static void callNextStep() {
 		
 		LogPositions();
+		GlobalObjs.ready = false;
 		
 		string curLine = null;// = inputFile.ReadLine ();
 		string[] parsedLine = null;
 		bool firstiteration = true;
 		
+		// update script stuff here
+		string nLLine = null;
+		string[] parsenum = null;
+		
+		nLLine = numLines.ReadLine ();
+	if (nLLine != null) {
+		parsenum = nLLine.Split ('\t'); // 0 has # of lines, 1 has show message or not
+		
+		if (parsenum[1] == "Y") {
+			GlobalObjs.showwarning = true;
+		} else {
+			GlobalObjs.showwarning = false;
+		}
+		
+		if (!initializing) {
+			// don't set these unless it's not the first time	
+			GlobalObjs.boxTop = GlobalObjs.boxTop + GlobalObjs.boxHeight + 18f; // set this to the right spot
+			GlobalObjs.targetTopAllText = GlobalObjs.targetTopAllText - GlobalObjs.boxHeight - 18f; // move it up
+			//GlobalObjs.currentTopAllText = 0f; // don't change this - do it only in the update
+			GlobalObjs.boxHeight = int.Parse(parsenum[0]) * 18f; // set to the current height
+		} else {
+			// initialize
+			GlobalObjs.targetTopAllText = 0f;
+			GlobalObjs.currentTopAllText = 0f;
+			GlobalObjs.boxTop = 2f;
+			GlobalObjs.boxHeight = int.Parse(parsenum[0]) * 18f;
+			initializing = false;
+		}
+		
+		if (parsenum[2] == "Y") {
+			// has speech, so set the nextline and hasspeech vars
+			GlobalObjs.hasspeech = true;
+			GlobalObjs.humanfunc.mynextline = parsenum[3];
+		} else {
+			GlobalObjs.hasspeech = false;
+			GlobalObjs.humanfunc.mynextline = "";
+		}
+		
+	}
 		
 		while (firstiteration || (curLine != null && parsedLine[0] != "N")) {
 			firstiteration = false;
@@ -1103,11 +1456,18 @@ public class InitScript : MonoBehaviour {
 	                    //Debug.Log ("CJT MESSAGE="+parsedLine [1] + " " + parsedLine [2] + " CJT" + currentMessageNum + " " + parsedLine [3]);
 	                    //vhmsg.SendVHMsg ("vrExpress", parsedLine [1] + " " + parsedLine [2] + " CJT" + currentMessageNum + " " + parsedLine [3]);
 		                //Debug.Log ("Doing movement for "+parsedLine[2]+" doing:"+parsedLine[4]);	
+					
+					
+					// if human step, skip
+					if (parsedLine[2] == GlobalObjs.human.name) {
+						// skip this line!!!
+					} else {
 						if (mode == playmodes.random) {
 							doRandomMvmt(parsedLine[2], parsedLine[4]);
 						} else {
 							parseMovement(parsedLine[2], parsedLine[4]);    
 						}
+					}
 						break;
 	                case "SPEAK":
 	                    //if (parsedLine [1] == actor) {
@@ -1117,6 +1477,10 @@ public class InitScript : MonoBehaviour {
 	                        // else send the message to be spoken by the character
 	                    //Debug.Log ("CJT MESSAGE="+parsedLine [1] + " " + parsedLine [2] + " CJT" + currentMessageNum + " " + parsedLine [3]);
 						
+					if (parsedLine[2] == GlobalObjs.human.name) {
+						// skip this line!!
+					} else {
+					
 						CharFuncs who = GlobalObjs.getCharFunc(parsedLine[2]);
 						string saywhat = findSpeech(parsedLine[4]);
 						Debug.Log (who.name+" says: "+saywhat);
@@ -1138,6 +1502,7 @@ public class InitScript : MonoBehaviour {
 	                    		}
 	                    	}
 	                    }
+					}
 	                    break;
 					case "BREAK":
 						Debug.Log ("Start Intermission");

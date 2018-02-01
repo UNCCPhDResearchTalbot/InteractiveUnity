@@ -8,7 +8,7 @@ C	x	ALGERNON	-18	15	0	-1	0	0	null	PINKMat	5	Bruce
 C	x	CECILY	-15	13	0	-1	0	0	null	CYANMat	6	Princess
 M	x	CHAIR	25	25	Yellow
 M	x	TABLE	-10	20	Blue
-M	x	COUCH	-17	15	Green
+M	x	COUCH	-17	17	Green
 P	x	HANDBAG	50	-5	Cyan
 P	x	BOOK	-11	21	Purple
 M	X	BOOKCASE	-50	-5	Orange

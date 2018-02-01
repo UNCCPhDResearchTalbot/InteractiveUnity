@@ -30,6 +30,17 @@ public class GlobalObjs : MonoBehaviour
 	public static List<QueueObj> globalQueue = new List<QueueObj>();
 	static bool isfirst = true;
 	
+	// scrolling script variables
+	public static bool showwarning = false;
+	public static float targetTopAllText = 0f;
+	public static float currentTopAllText = 0f;
+	public static float boxTop = 0f;
+	public static float boxHeight = 0f;
+	
+	public static bool hasspeech = false;
+	public static bool ready = false;
+	
+	
 //	public static Queue<QueueObj> globalQueue = new Queue<QueueObj>();
 	/*public static GameObject Skull1 = null;
 	public static GameObject Skull2 = null;
@@ -307,7 +318,10 @@ public class GlobalObjs : MonoBehaviour
 		if (InitScript.started && GlobalObjs.globalQueue.Count == 0) {
 			// read next set of lines
 			Debug.Log ("Calling next Step, no items in queue");
-			InitScript.callNextStep();
+			
+			// have next button show
+			ready = true;
+//			InitScript.callNextStep();
 		} 
 	
 	}
@@ -534,6 +548,111 @@ public class GlobalObjs : MonoBehaviour
 			}
 		}
 		return false;
+	}
+	
+	void Update() {
+		
+		// in case character got stuck, use Shift-Q to invoke the stop all function for all characters
+		if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey (KeyCode.RightShift)) {
+			if (Input.GetKeyDown(KeyCode.Q)) {
+					foreach(CharFuncs c in GlobalObjs.listOfChars) {
+						c.doStopAll ();
+					}
+					Debug.Log ("Stopped everything");
+			}
+		}
+		
+		// find any mouse clicks
+		if (Input.GetMouseButtonDown(0) && InitScript.c == 0 && InitScript.started){ // if left button pressed & no menu showing...
+			// only act upon clicks inside window (not legend or script areas)
+			if (Input.mousePosition.x > 1250 || Input.mousePosition.y < Screen.height - 640) { // ignore
+			} else {
+		     Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+		     RaycastHit hit;
+		     if (Physics.Raycast(ray, out hit)){
+			       // the object identified by hit.transform was clicked
+			       // do whatever you want
+					Debug.Log ("Clicked on "+hit.transform.gameObject.name+" type="+hit.transform.gameObject.tag);
+					InitScript.a = Input.mousePosition.x;
+					InitScript.b = Input.mousePosition.y;
+					InitScript.what = hit.transform.gameObject;
+					InitScript.atwhere = hit.point;
+					switch (hit.transform.gameObject.tag) {
+						case "Pawn":
+							// show menu with go to, point to, look at, pick up OR put down if human holding it
+							// make sure if someone else is holding this pawn we add a put down for that character
+							InitScript.c = 4;
+							if (GlobalObjs.human.transform.GetChildCount() > 0) {
+								if (GlobalObjs.human.transform.GetChildCount() > 1) {
+									if (GlobalObjs.human.transform.GetChild (0).gameObject.name == hit.transform.gameObject.name || GlobalObjs.human.transform.GetChild (1).gameObject.name == hit.transform.gameObject.name) {
+										InitScript.c = 1;
+									}
+								} else {
+									if (GlobalObjs.human.transform.GetChild (0).gameObject.name == hit.transform.gameObject.name) {
+										InitScript.c = 1;
+									}
+								}
+							}
+							
+							break;
+							
+						case "Person":
+							// show menu with go to, point to, look at
+							//CharFuncs personfunc = (CharFuncs) hit.transform.GetComponent (typeof(CharFuncs));
+							// if self, don't show any menu unless holding something show put down
+							InitScript.c = 3;//or 1
+							if (hit.transform.gameObject.name == GlobalObjs.human.name) { // if click on self, show 0 or 1 if holding
+								if (GlobalObjs.human.transform.GetChildCount() > 0) {
+									if (GlobalObjs.human.transform.GetChildCount() > 1) {
+											// has to be pointing and holding something
+											InitScript.c = 1;
+											if (GlobalObjs.human.transform.GetChild (0).gameObject.name != "ArmPrefab") {
+												InitScript.what = GlobalObjs.human.transform.GetChild(0).gameObject;
+											} else {
+												InitScript.what = GlobalObjs.human.transform.GetChild(1).gameObject;
+											}
+										
+									} else {
+										if (GlobalObjs.human.transform.GetChild (0).gameObject.name != "ArmPrefab") {
+											InitScript.c = 1;
+											InitScript.what = GlobalObjs.human.transform.GetChild (0).gameObject;
+										}
+									}
+								} else {
+									InitScript.c = 0;
+								}
+							}
+							break;
+							
+						case "Mark":
+							// show menu with go to, point to, look at
+							InitScript.c = 3;
+							break;
+							
+						case "Floor":
+							// show menu with go to, point to, look at -- hide go to if beyond limits of scene?
+							InitScript.c = 3; // or 2
+							if (hit.point.x > 45 || hit.point.x < -45) {
+								InitScript.c = 2;
+							} else {
+								if (hit.point.z > 60 || hit.point.z < 0) {
+									InitScript.c = 2;
+								}
+							}
+							break;
+							
+						default:
+							// do nothing
+							InitScript.c = 0;
+							break;
+						
+					}
+					
+					
+		     }
+		}
+		
+	}
 	}
 	
 }
