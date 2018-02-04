@@ -39,6 +39,7 @@ public class GlobalObjs : MonoBehaviour
 	
 	public static bool hasspeech = false;
 	public static bool ready = false;
+	public static List<GameObject> toDeleteList = new List<GameObject>();
 	
 	
 //	public static Queue<QueueObj> globalQueue = new Queue<QueueObj>();
@@ -317,7 +318,13 @@ public class GlobalObjs : MonoBehaviour
 		
 		if (InitScript.started && GlobalObjs.globalQueue.Count == 0) {
 			// read next set of lines
-			Debug.Log ("Calling next Step, no items in queue");
+			//Debug.Log ("Calling next Step, no items in queue");
+			// destroy temporary items:
+			
+			foreach(GameObject g in toDeleteList) {
+				Destroy (g);
+				toDeleteList.Remove(g);
+			}
 			
 			// have next button show
 			ready = true;
@@ -551,6 +558,23 @@ public class GlobalObjs : MonoBehaviour
 	}
 	
 	void Update() {
+		// skip to next level
+		if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey (KeyCode.RightShift)) {
+			if (Input.GetKeyDown(KeyCode.S)) {
+				Debug.Log ("CJT MESSAGE=DONE!!");
+	            InitScript.inputFile.Close ();
+				QueueObj temp = new QueueObj(null, null, new Vector3(0,0,0), QueueObj.actiontype.intermission);
+						InitScript.inum = temp.msgNum;
+						GlobalObjs.globalQueue.Add(temp);
+				InitScript.alldone = true;
+//	            started = false;
+	            InitScript.inputFile = null;
+			}
+		}
+		
+		// exit application
+		if (Input.GetKey("escape"))
+            Application.Quit();
 		
 		// in case character got stuck, use Shift-Q to invoke the stop all function for all characters
 		if (Input.GetKey(KeyCode.LeftShift) || Input.GetKey (KeyCode.RightShift)) {
@@ -653,6 +677,25 @@ public class GlobalObjs : MonoBehaviour
 		}
 		
 	}
+	}
+	
+	void OnLevelWasLoaded(int level) {
+		if (isfirst) {
+			isfirst = false;
+//			#if UNITY_EDITOR
+            Material m = Resources.Load("Materials/BLUEarmmat") as Material;
+            m = Resources.Load("Materials/PURPLEarmmat") as Material;
+            m = Resources.Load("Materials/REDarmmat") as Material;
+            m = Resources.Load("Materials/GREENarmmat") as Material;
+			m = Resources.Load("Materials/BROWNarmmat") as Material;
+			m = Resources.Load("Materials/CYANarmmat") as Material;
+			m = Resources.Load("Materials/ORANGEarmmat") as Material;
+			m = Resources.Load("Materials/PEACHarmmat") as Material;
+			m = Resources.Load("Materials/PINKarmmat") as Material;
+			m = Resources.Load("Materials/YELLOWarmmat") as Material;
+			//#endif
+		}
+		
 	}
 	
 }

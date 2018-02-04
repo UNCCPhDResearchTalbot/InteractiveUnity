@@ -60,6 +60,7 @@
      <Compile Include="Assets\Scripts\styling.cs" />
      <None Include="Assets\Resources\Files\PracticeNumLines.txt" />
      <None Include="Assets\Resources\Files\Practice.txt" />
+     <None Include="Assets\Resources\Files\ErnestNumLines.txt" />
      <None Include="Assets\Resources\Files\ErnestCharInit.txt" />
      <None Include="Assets\Resources\Files\PracticeInit.txt" />
      <None Include="Assets\Resources\Files\ErnestScriptText.txt" />

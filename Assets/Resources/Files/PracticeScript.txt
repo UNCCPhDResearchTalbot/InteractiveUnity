@@ -1,18 +1,18 @@
-MISSPRISM
-	(MISSPRISM Moves to CHASUBLE)
+MISS PRISM
+	(MISS PRISM Moves to CHASUBLE)
 	I was told you expected me in the vestry, dear Canon. I have been waiting for you there for an hour and three-quarters.
 
-	(Catches sight of LADYBRACKNELL, who has fixed her with a stony glare. MISSPRISM grows pale and quails. She looks anxiously around as if desirous to 
+	(Catches sight of LADY BRACKNELL, who has fixed her with a stony glare. MISS PRISM grows pale and quails. She looks anxiously around as if desirous to 
 	escape.)
 
-LADYBRACKNELL
+LADY BRACKNELL
 	(In a severe, judicial voice.)
 	Prism!
 
-	(MISSPRISM bows her head in shame.)
+	(MISS PRISM bows her head in shame.)
 	Come here, Prism!
 
-	(MISSPRISM approaches LADYBRACKNELL in a humble manner.)
+	(MISS PRISM approaches LADY BRACKNELL in a humble manner.)
 	Prism! Where is that baby?
 
 	(General consternation. The CANON starts back in horror. ALGERNON and JACK pretend to be anxious to shield CECILY and GWENDOLEN from hearing the 
@@ -22,15 +22,15 @@ LADYBRACKNELL
 	midnight, standing by itself in a remote corner of Bayswater. It contained the manuscript of a three-volume novel of more than usually revolting 
 	sentimentality.
 
-	(MISSPRISM starts in involuntary indignation.) 
+	(MISS PRISM starts in involuntary indignation.) 
 	But the baby was not there!
 
-	(Every one looks at MISSPRISM.)
+	(Every one looks at MISS PRISM.)
 	Prism! Where is that baby?
 
 	(A pause.)
 
-MISSPRISM
+MISS PRISM
 	Lady Bracknell, I admit with shame that I do not know. I only wish I did. The plain facts of the case are these. On the morning of the day you mention, 
 	a day that is for ever branded on my memory, I prepared as usual to take the baby out in its perambulator. I had also with me a somewhat old, but 
 	capacious hand-bag in which I had intended to place the manuscript of a work of fiction that I had written during my few unoccupied hours. In a moment of 
@@ -40,19 +40,19 @@ JACK
 	(Who has been listening attentively.)
 	But where did you deposit the hand-bag?
 
-MISSPRISM
+MISS PRISM
 	Do not ask me, Mr. Worthing.
 
 JACK
 	Miss Prism, this is a matter of no small importance to me. I insist on knowing where you deposited the hand-bag that contained that infant.
 
-MISSPRISM
+MISS PRISM
 	I left it in the cloak-room of one of the larger railway stations in London.
 
 JACK
 	What railway station?
 
-MISSPRISM
+MISS PRISM
 	(Quite crushed.)
 	Victoria. The Brighton line.
 
@@ -66,6 +66,6 @@ GWENDOLEN
 
 	(Exit JACK in great excitement.)
 
-MISSPRISM
+MISS PRISM
 	(Points to the book, then picks up the book.)
 	I am going to read that book.

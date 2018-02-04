@@ -260,9 +260,10 @@ public class CharFuncs : MonoBehaviour {
 		if (pointing) {
 			pointertimer += Time.deltaTime;
 			if (pointertimer >= pointertimerMax) {
-				if (pointtarget.tag == "Delete") {
+				if (pointtarget.tag == "Delete" && isHuman) {
 					// delete this object
-					Destroy(pointtarget);
+					GlobalObjs.toDeleteList.Add (pointtarget);
+					//Destroy(pointtarget);
 				}
 				// done pointing
 				pointertimer = 0.0f;
@@ -438,9 +439,10 @@ public class CharFuncs : MonoBehaviour {
 			if (Mathf.RoundToInt(getAngle(rotateTo)*10) == 0 || shortenrotate) { 
 				//Debug.Log ("In finish rotating on update and rotate="+rotating+" moving="+moving+" for "+thisChar.name);
 				// remove from global queue!
-				if (rotateToObj.tag == "Delete") {
+				if (rotateToObj.tag == "Delete" && isHuman) {
 					// delete this object
-					Destroy(rotateToObj);
+					GlobalObjs.toDeleteList.Add (rotateToObj);
+					//Destroy(rotateToObj);
 				}
 				shortenrotate = false;
 				rotating = false;
@@ -658,7 +660,7 @@ public class CharFuncs : MonoBehaviour {
 	
 	public void doWalk(float x, float y, GameObject towhatobj, bool tofollow) {
 		
-		if (InitScript.mode == InitScript.playmodes.baseline && !isHuman) {
+		if (InitScript.mode == InitScript.playmodes.practice && !isHuman) {
 			// do nothing
 		} else {
 		
@@ -759,6 +761,13 @@ public class CharFuncs : MonoBehaviour {
 		}
 		if (GlobalObjs.hasspeech && isHuman) {
 			GlobalObjs.hasspeech = false;
+			// add rule to get everyone to look at the speaker
+							Debug.Log ("Adding Look at Speaker "+thisChar.name);
+	                    	foreach (CharFuncs c in GlobalObjs.listOfChars) {
+	                    		if (c.onstage() && c != thisChar) {
+	                    			c.doRotate(thisChar.transform.position.x, thisChar.transform.position.z, thisChar);
+	                    		}
+	                    	}
 		}
 		
 		/*if (InitScript.mode == InitScript.playmodes.rules) {
@@ -816,7 +825,7 @@ public class CharFuncs : MonoBehaviour {
 	
 	public void doPickup(GameObject obj) {
 		
-		if (InitScript.mode == InitScript.playmodes.baseline && !isHuman) {
+		if (InitScript.mode == InitScript.playmodes.practice && !isHuman) {
 			// do nothing
 		} else {
 			
@@ -870,7 +879,7 @@ public class CharFuncs : MonoBehaviour {
 	
 	public void doPutDown(GameObject obj) {
 		
-		if (InitScript.mode == InitScript.playmodes.baseline && !isHuman) {
+		if (InitScript.mode == InitScript.playmodes.practice && !isHuman) {
 			// do nothing
 		} else {
 			
@@ -1010,6 +1019,15 @@ public class CharFuncs : MonoBehaviour {
 		//if (InitScript.mode == InitScript.playmodes.baseline && !isHuman) {
 			// do nothing
 		//} else {
+			if (isHuman) {
+				// add rule to get everyone to look at the point to target
+					Debug.Log ("Adding Everyone Look at pointed object "+target.name);
+	            	foreach (CharFuncs c in GlobalObjs.listOfChars) {
+	            		if (c.onstage() && c != thisChar) {
+	            			c.doRotate(target.transform.position.x, target.transform.position.z, target);
+	            		}
+	            	}
+			}
 			
 			QueueObj temp = new QueueObj(thisChar, target, target.transform.position, QueueObj.actiontype.point);
 			GlobalObjs.globalQueue.Add(temp);

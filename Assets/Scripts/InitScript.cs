@@ -71,8 +71,8 @@ public class InitScript : MonoBehaviour {
 	bool actionshow = false;
 	bool charshow = false;
 	bool targetshow = false;
-	public enum playmodes { baseline, random, nlp, rules, fdg };
-	public static playmodes mode = playmodes.baseline;
+	public enum playmodes { practice, baseline, random, nlp, rules, fdg };
+	public static playmodes mode = playmodes.practice;
 	public static bool runshort = false;
 	
 	float timer = 0.0f;
@@ -88,7 +88,7 @@ public class InitScript : MonoBehaviour {
 	static string bmlFileName = Application.dataPath + @"//Files//BMLFile.txt";
 	static string miniinputFileName = Application.dataPath + @"//Files//miniInputFile.txt";
 	static string minibmlFileName = Application.dataPath + @"//Files//miniBMLFile.txt";
-*/	static StringReader inputFile = null;
+*/	public static StringReader inputFile = null;
 	static StringReader playscript = null;
 	static string playscripttext = null;
 	static StringReader numLines = null;
@@ -133,7 +133,7 @@ public class InitScript : MonoBehaviour {
 	static Color mycolor;
 	static float itimer = 0.0f;
 	static float itimerMax = 7.0f;
-	static int inum = -1;
+	public static int inum = -1;
 	static Texture2D mytexture;
 	static Texture2D mytexture2;
 	static Texture2D mytexture3;
@@ -146,9 +146,9 @@ public class InitScript : MonoBehaviour {
 	static float wtimer = 0.0f;
 	static float wtimerMax = 1.0f;
 	
-	static bool alldone = false;
+	public static bool alldone = false;
 	static float atimer = 0.0f;
-	static float atimerMax = 4.0f;
+	static float atimerMax = 1.0f;
 	
 	static float pauseamt = 0.0f;
 	static float pausemax = 5.0f;
@@ -247,6 +247,7 @@ public class InitScript : MonoBehaviour {
 		
 		legendTexture = Resources.Load ("Textures/ErnestLegend") as Texture;
 		
+		/*
 		// initialize click log file
 		using(System.IO.StreamWriter myFile = new System.IO.StreamWriter(dataPath + @"//Logs//"+logFile+"click.log", true)) {
 			
@@ -262,12 +263,13 @@ public class InitScript : MonoBehaviour {
 					
 			}
 				
-		}
+		}*/
 		
 	}
 	
 	// Update is called once per frame
 	void Update () {
+		
 		
 		// update box positions for playscript
 		if (GlobalObjs.currentTopAllText != GlobalObjs.targetTopAllText) {
@@ -1021,7 +1023,7 @@ public class InitScript : MonoBehaviour {
 				GUI.backgroundColor = Color.yellow;
 				
 				if (GUI.Button (new Rect(50, 250, 100, 30), "Start Session")) {
-					Debug.Log ("Starting Play "+Time.time);	
+					Debug.Log ("Starting Play "+Time.time+" - scenecount="+scenecount);	
 					c = 0;
 					if (scenecount == 0) {
 						scene = "PracticeScene";
@@ -1037,6 +1039,10 @@ public class InitScript : MonoBehaviour {
 						}
 						//betweenScenes = true;
 						// assume practice scene is already loaded
+						LoadChars ();
+						//RunPlay();
+						starting = true;
+						timer = 0.0f;
 					} else {
 						switch (scenecount) {
 							case 1:
@@ -1046,15 +1052,13 @@ public class InitScript : MonoBehaviour {
 								scene = runsecond;
 								break;
 						}
+						Debug.Log ("Loading scene = "+scene);
 						scenecount++;
 						// load corresponding scene
 						Application.LoadLevel(scene);
 					
 					}
-					LoadChars ();
-					//RunPlay();
-					starting = true;
-					timer = 0.0f;
+					
 				}
 				
 			/*
@@ -1110,7 +1114,7 @@ public class InitScript : MonoBehaviour {
 	public static void LogPositions() {
 		
 		// uses logfilename & character name to append to a logfile initiated at runplay
-		
+		Debug.Log ("Current Level="+Application.loadedLevel);
 		DateTime timeSpan = System.DateTime.Now;
  		string timeText = timeSpan.ToString();//string.Format("{0:D2}:{1:D2}:{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
 		
@@ -1125,6 +1129,7 @@ public class InitScript : MonoBehaviour {
 	}
 	
 	public static void LogClicks(float x, float y, GameObject g, float w, float z, string option) {
+		Debug.Log ("Current Level="+Application.loadedLevel);
 		DateTime timeSpan = System.DateTime.Now;
  		string timeText = timeSpan.ToString();//string.Format("{0:D2}:{1:D2}:{2:D2}", timeSpan.Hours, timeSpan.Minutes, timeSpan.Seconds);
 		using(System.IO.StreamWriter myFile = new System.IO.StreamWriter(dataPath + @"//Logs//"+logFile+"click.log", true)) {
@@ -1194,6 +1199,24 @@ public class InitScript : MonoBehaviour {
  		string timeText = timeSpan.ToString("MM-dd-yy-HH-mm-ss-fff");
 		logFile = participantID+"-"+timeText+"-"+myshortname+"-"; // name log files after participant
 		
+		// initialize click log file
+		using(System.IO.StreamWriter myFile = new System.IO.StreamWriter(dataPath + @"//Logs//"+logFile+"click.log", true)) {
+			
+			myFile.WriteLine("Time\tMouse Click X\tMouse Click Y\tName of Object Clicked On\tFloor Location X\tFloor Location Z\tWhat Option Chosen from Menu");
+				
+		}
+		
+		// initialize character position log files
+		foreach(GameObject c in GlobalObjs.listOfCharObj) {
+			Debug.Log ("char name for log="+c.name);
+			using(System.IO.StreamWriter myFile = new System.IO.StreamWriter(dataPath + @"//Logs//"+logFile+c.name+".log", true)) {
+				
+				myFile.WriteLine("Time\tX Position\tZ Position\tY Rotation Euler Angle");
+					
+			}
+				
+		}
+		
 		Debug.Log ("Filename="+myfilename);
 		// make sure a file was loaded and a file was selected for the script
 		
@@ -1201,10 +1224,10 @@ public class InitScript : MonoBehaviour {
 		switch (indexNumber) {
 		case 0: // baseline -- by default if don't choose or if click choose mode
 
-			mode = playmodes.baseline;
+			mode = playmodes.practice;
 			newstyle.normal.background = mytexture;
 			newstyle.normal.textColor = Color.black;
-			logFile = logFile + "baseline-";
+			logFile = logFile + "practice-";
 			/*if (runshort) {
 				inputFile = File.OpenText (miniinputFileName);
 				GlobalObjs.Hamlet.transform.position = new Vector3(4.2f, 0f, 37f);
@@ -1393,7 +1416,7 @@ public class InitScript : MonoBehaviour {
 	}
 	
 	public static void callNextStep() {
-		
+		Debug.Log ("Calling Next Step");
 		LogPositions();
 		GlobalObjs.ready = false;
 		
@@ -1493,11 +1516,11 @@ public class InitScript : MonoBehaviour {
 						}
 	                    //vhmsg.SendVHMsg ("vrSpeak", parsedLine [1] + " " + parsedLine [2] + " CJT" + currentMessageNum + " " + parsedLine [3]);
 	                    //}
-	                    if (mode == playmodes.rules || mode == playmodes.fdg) {
+	                    if (mode == playmodes.rules || mode == playmodes.fdg || mode == playmodes.practice) {
 	                    	// add rule to get everyone to look at the speaker
 							Debug.Log ("Adding Look at Speaker "+who.thisChar.name);
 	                    	foreach (CharFuncs c in GlobalObjs.listOfChars) {
-	                    		if (c.onstage() && c != who) {
+	                    		if (c.onstage() && c != who && !c.isHuman) {
 	                    			c.doRotate(who.thisChar.transform.position.x, who.thisChar.transform.position.z, who.gameObject);
 	                    		}
 	                    	}
@@ -2005,11 +2028,11 @@ public class InitScript : MonoBehaviour {
 		} else if (xmltxt.Contains ("POINT") || xmltxt.Contains ("point")) {
 			Debug.Log ("Action=point");
 			if (target != null) {
-				if (mode == playmodes.rules || mode == playmodes.fdg) {
+				if (mode == playmodes.rules || mode == playmodes.fdg || mode == playmodes.practice) {
 	            	// add rule to get everyone to look at the point to target
 					Debug.Log ("Adding Everyone Look at pointed object "+target.name);
 	            	foreach (CharFuncs c in GlobalObjs.listOfChars) {
-	            		if (c.onstage() && c != who) {
+	            		if (c.onstage() && c != who && !c.isHuman) {
 	            			c.doRotate(target.transform.position.x, target.transform.position.z, target);
 	            		}
 	            	}
@@ -2030,7 +2053,7 @@ public class InitScript : MonoBehaviour {
 		// check if my target is closer to audience 
 		// 		checkmovetarget for move -- if upstage, adjust based on precedence -- check all chars movements, not just current position!!
 		foreach (CharFuncs c in GlobalObjs.listOfChars) {
-			if (c.onstage() && c.thisChar.name != who.thisChar.name) { // only check onstage chars and non-same chars
+			if (c.onstage() && c.thisChar.name != who.thisChar.name && !who.isHuman) { // only check onstage chars and non-same chars
 				switch (who.compareImportance(c)) {
 					case "More":
 						// make sure who is closer to audience -- consider target, not current loc
@@ -2056,7 +2079,7 @@ public class InitScript : MonoBehaviour {
 		}
 		// check to be sure not too close to another character first
 		foreach (CharFuncs c in GlobalObjs.listOfChars) {
-			if (c.onstage() && c.thisChar.name != who.thisChar.name) {
+			if (c.onstage() && c.thisChar.name != who.thisChar.name && !who.isHuman) {
 				if (who.getDist(c.getLastMovePostn()) < 3) { // is this really the distance???
 					// move apart
 					Debug.Log ("NEED TO SEPARATE!!!");
@@ -2510,6 +2533,113 @@ public class InitScript : MonoBehaviour {
 				
 	}
 	
+	
+	void OnLevelWasLoaded(int level) {
+		// general initializations
+		Instance = this;
+
+		
+		dataPath = Application.dataPath;
+		
+
+		DateTime timeSpan = System.DateTime.Now;
+		participantID = timeSpan.ToString("MMddHHmmssfff");
+		
+		spacing = heightimg+heighttext+5f;
+		mycolor = GUI.backgroundColor;
+		mytexture = new Texture2D(Screen.width, Screen.height); // orange
+		int y = 0;
+        while (y < mytexture.height) {
+            int x = 0;
+            while (x < mytexture.width) {
+                //Color color = ((x & y) ? Color.white : Color.gray);
+                mytexture.SetPixel(x, y, new Color(255f/255f, 127f/255f, 0f/255f));//new Color(51f/255f, 178f/255f, 146f/255f)); // turquoise
+                ++x;
+            }
+            ++y;
+        }
+        mytexture.Apply();
+		mytexture2 = new Texture2D(Screen.width, Screen.height); // brown
+		y = 0;
+        while (y < mytexture2.height) {
+            int x = 0;
+            while (x < mytexture2.width) {
+                //Color color = ((x & y) ? Color.white : Color.gray);
+                mytexture2.SetPixel(x, y, new Color(89f/255f, 64f/255f, 39f/255f));//new Color(51f/255f, 178f/255f, 146f/255f)); // turquoise
+                ++x;
+            }
+            ++y;
+        }
+        mytexture2.Apply();
+		
+		mytexture3 = new Texture2D(Screen.width, Screen.height); // yellow
+		y = 0;
+		while (y < mytexture3.height) {
+			int x=0;
+			while (x < mytexture3.width) {
+				mytexture3.SetPixel(x, y, Color.yellow);
+				++x;
+			}
+			++y;
+		}
+		mytexture3.Apply();
+		
+		newstyle = new GUIStyle();
+		newstyle.normal.background = mytexture;
+		newstyle.fontSize = 30;
+		newstyle.normal.textColor = Color.black;
+		
+		buttonstyle = new GUIStyle();
+		buttonstyle.normal.background = (Texture2D)scriptBkgrd;
+		buttonstyle.normal.textColor = Color.white;
+		
+		
+		if (level == 1 || level == 2) {
+				
+				LoadChars ();
+				//RunPlay();
+				starting = true;
+				timer = 0.0f;
+				// update method picks this up and sets the stuff to start the play & set the files to use
+		}
+		
+		// **************************************
+		// Auto-load first set of files for practice
+		// **************************************
+		
+		legendTexture = Resources.Load ("Textures/ErnestLegend") as Texture;
+		
+		// commenting out because logfile isn't defined yet - gets defined in runplay() function
+		/*
+		// initialize click log file
+		using(System.IO.StreamWriter myFile = new System.IO.StreamWriter(dataPath + @"//Logs//"+logFile+"click.log", true)) {
+			
+			myFile.WriteLine("Time\tMouse Click X\tMouse Click Y\tName of Object Clicked On\tFloor Location X\tFloor Location Z\tWhat Option Chosen from Menu");
+				
+		}
+		
+		// initialize character position log files
+		foreach(GameObject c in GlobalObjs.listOfCharObj) {
+			using(System.IO.StreamWriter myFile = new System.IO.StreamWriter(dataPath + @"//Logs//"+logFile+c.name+".log", true)) {
+				
+				myFile.WriteLine("Time\tX Position\tZ Position\tY Rotation Euler Angle");
+					
+			}
+				
+		}*/
+		
+		
+		// level specific initializations
+		if (level == 2) { // NLP
+            Debug.Log ("NLP Loaded");
+		} else if (level == 1) { // FDG
+			Debug.Log ("FDG Loaded");
+		} else if (level == 0) { // Practice
+			Debug.Log ("Practice Loaded");
+		}
+		// start was clicked for level 1 or 2, so in that case, go ahead and start / remove the prompts on the screen so no double click required
+		
+	}
 	
 	
 }
