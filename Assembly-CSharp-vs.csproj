@@ -57,6 +57,7 @@
      <Compile Include="Assets\Scripts\QueueObj.cs" />
      <Compile Include="Assets\Scripts\SpeechBubble.cs" />
      <Compile Include="Assets\Scripts\miniQueueObj.cs" />
+     <Compile Include="Assets\Scripts\myGameController.cs" />
      <Compile Include="Assets\Scripts\styling.cs" />
      <None Include="Assets\Resources\Files\PracticeNumLines.txt" />
      <None Include="Assets\Resources\Files\Practice.txt" />

@@ -1,21 +1,17 @@
-3	Y	Y	I was told you expected me in the vestry, dear Canon. I have been waiting for you there for an hour and three-quarters.
-2	Y	N
+3	Y	Y	I'm going to sit down for this.
+2	N	N
 3	N	N
-2	N	N
-2	Y	N
-6	N	N
-2	N	N
-2	N	N
-1	N	N
-5	Y	Y	Lady Bracknell, I admit with shame that I do not know. I only wish I did. The plain facts of the case are these. On the morning of the day you mention, a day that is for ever branded on my memory, I prepared as usual to take the baby out in its perambulator. I had also with me a somewhat old, but capacious hand-bag in which I had intended to place the manuscript of a work of fiction that I had written during my few unoccupied hours. In a moment of mental abstraction, for which I never can forgive myself, I deposited the manuscript in the basinette, and placed the baby in the hand-bag.
-3	N	N
-2	Y	Y	Do not ask me, Mr. Worthing.
-2	N	N
-2	Y	Y	I left it in the cloak-room of one of the larger railway stations in London.
-2	N	N
-3	Y	Y	Victoria. The Brighton line.
 1	Y	N
-2	N	N
-2	N	N
+6	Y	Y	It seems to be mine. Yes, here is the injury it received through the upsetting of a Gower Street omnibus in younger and happier days. Here is the stain on the lining caused by the explosion of a temperance beverage, an incident that occurred at Leamington. And here, on the lock, are my initials. I had forgotten that in an extravagant mood I had had them placed there. The bag is undoubtedly mine. I am delighted to have it so unexpectedly restored to me. It has been a great inconvenience being without it all these years.
+3	N	N
+3	Y	Y	You?
+3	N	N
+3	Y	Y	Mr. Worthing! I am unmarried
+3	N	N	
 1	N	N
-3	Y	Y	I am going to read that book.
+3	Y	Y	Mr. Worthing, there is some error.
+2	Y	Y	There is the lady who can tell you who you really are.
+3	N	N
+3	N	N	
+3	N	N
+3	N	N

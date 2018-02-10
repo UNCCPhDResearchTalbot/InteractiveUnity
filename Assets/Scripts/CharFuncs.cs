@@ -260,7 +260,7 @@ public class CharFuncs : MonoBehaviour {
 		if (pointing) {
 			pointertimer += Time.deltaTime;
 			if (pointertimer >= pointertimerMax) {
-				if (pointtarget.tag == "Delete" && isHuman) {
+				if (pointtarget != null && pointtarget.tag == "Delete" && isHuman) {
 					// delete this object
 					GlobalObjs.toDeleteList.Add (pointtarget);
 					//Destroy(pointtarget);
@@ -439,7 +439,7 @@ public class CharFuncs : MonoBehaviour {
 			if (Mathf.RoundToInt(getAngle(rotateTo)*10) == 0 || shortenrotate) { 
 				//Debug.Log ("In finish rotating on update and rotate="+rotating+" moving="+moving+" for "+thisChar.name);
 				// remove from global queue!
-				if (rotateToObj.tag == "Delete" && isHuman) {
+				if (rotateToObj != null && rotateToObj.tag == "Delete" && isHuman) {
 					// delete this object
 					GlobalObjs.toDeleteList.Add (rotateToObj);
 					//Destroy(rotateToObj);
@@ -571,9 +571,9 @@ public class CharFuncs : MonoBehaviour {
 			
 			bool conflictingperson = checkothers(moveTo);
 			if ((conflictingperson && getDist(moveTo) < 3f) ||shortenmove || (getDist (moveTo) < 1f && !following) || (following && getDist (moveTo) < 2f && moveToObjFunc != null && moveToObjFunc.beingfollowed == false)) {
-				if (moveToObj.tag == "Delete") {
+				if (moveToObj !=null && moveToObj.tag == "Delete" && isHuman) {
 					// delete this object
-					Destroy(moveToObj);
+					GlobalObjs.toDeleteList.Add (moveToObj);
 				}
 				moving = false;
 				which = -1;
@@ -666,6 +666,7 @@ public class CharFuncs : MonoBehaviour {
 		
 			// add to global queue
 			GlobalObjs.printQueue("Start Walk "+thisChar.name);
+			Debug.Log ("char="+thisChar.name);
 			QueueObj temp = new QueueObj(thisChar, towhatobj, (towhatobj == null)?(new Vector3(x, 0, y)):(towhatobj.transform.position), QueueObj.actiontype.move);
 			GlobalObjs.globalQueue.Add(temp);
 			Debug.Log ("*********************Added "+temp.msgNum+" for "+thisChar.name);

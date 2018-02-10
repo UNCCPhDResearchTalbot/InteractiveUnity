@@ -23,11 +23,13 @@ public class QueueObj : MonoBehaviour {
 	
 	public QueueObj(GameObject a, GameObject t, Vector3 tp, actiontype at) {
 		actorObj = a;
+		if (at != actiontype.intermission) {Debug.Log ("actor obj="+a.name);}
 		targetObj = t;
 		target = tp;
 		action = at;
 		if (at != actiontype.intermission) {
 			actorFunc = GlobalObjs.getCharFunc(actorObj);
+			//Debug.Log ("actor func="+actorFunc.thisChar.name);
 		}
 		msgNum = curMsg;
 		curMsg++;

@@ -146,8 +146,10 @@ public class Forces : MonoBehaviour {
 		
 				t = numiterations;
 				for (int a = 0; a < g.characters.Count; a++) {
-					g.characters[a].Data.x = g.characters[a].Data.pos.x;
-					g.characters[a].Data.y = g.characters[a].Data.pos.y;
+					if (g.characters[a].Data.type == "char") { // don't update human info
+						g.characters[a].Data.x = g.characters[a].Data.pos.x;
+						g.characters[a].Data.y = g.characters[a].Data.pos.y;
+					}
 					if (g.characters[a].Data.ismoveable ){//&& characters[a].onstage) {
 						g.characters[a].Data.upddisp(0, 0);
 						// = {
@@ -183,14 +185,14 @@ public class Forces : MonoBehaviour {
 			}			
 			break;
 		case "center":
-		case "char":
+		case "character":
 			return (x*x) - (avgdist * avgdist);
 			break;
 		case "target":
 			return (x*x) * 6;
 			break;
 		case "human":
-			return (x*x*.5f) - (avgdist * avgdist);
+			return (x*x) - (avgdist * avgdist);// was (x*x*.5f) - (avgdist * avgdist)
 			break;
 		default:
 			return (x*x) - (avgdist * avgdist);
@@ -209,7 +211,7 @@ public class Forces : MonoBehaviour {
 			}			
 			break;
 		case "center":
-		case "char":
+		case "character":
 			return (-1*x*x) + (avgdist * avgdist);
 			break;
 		case "target":
@@ -290,32 +292,40 @@ public class Forces : MonoBehaviour {
 			// check if last movement puts them onstage or not, if no movement, then current position
 			Vector3 lastPostn = c.getLastMovePostn();
 			Debug.Log ("Last posn="+lastPostn);
-			if (positionOnStage(lastPostn)) {
-			
+			if (c.isHuman) {
 				// if onstage, add to graph & make moveable or not based on pickup location & type
-				newNode = new Node(c.name, c.name, "char", lastPostn.x, lastPostn.z, null, c);
-			
-				// add targets if exist for the last movement
-				GameObject lastTarget = c.getLastTarget();
-				if (lastTarget != null && !(isAChar (lastTarget.name))) { // !(lastTarget.name == "Hamlet" || lastTarget.name == "Horatio" || lastTarget.name == "GraveDigger" || lastTarget.name == "GraveDiggerTwo")) {
-						// add target to graph
-						newTarget = new Node(lastTarget.name, lastTarget.name, "target", lastTarget.transform.position.x, lastTarget.transform.position.z, null);
-						g.AddEdge(newNode.fvert, newTarget.fvert, "target");
-				}
-				if(lastPostn == c.thisChar.transform.position) {
-					if (c.lastmoveToObj == null) {
-						// isn't moving, so add target as their current position so they don't move too far
-						newTarget = new Node(c.name+"-current postn", c.name+"-current postn", "target", lastPostn.x, lastPostn.z, null);
-						g.AddEdge (newNode.fvert, newTarget.fvert, "target");
-					} else {
-						// had a previous target, so keep it
-						newTarget = new Node(c.name+"-old target", c.name+"-old target", "target", c.lastmoveToObj.transform.position.x, c.lastmoveToObj.transform.position.z, null);
-						g.AddEdge (newNode.fvert, newTarget.fvert, "target");
-					}
-				}
-				Debug.Log("          "+c.name+", cur=("+c.transform.position.x+", "+c.transform.position.z+"), last=("+lastPostn.x+", "+lastPostn.z+") target="+lastTarget);
+					newNode = new Node(c.name, c.name, "human", lastPostn.x, lastPostn.z, null, c);
+				
+					Debug.Log("          human="+c.name+", cur=("+c.transform.position.x+", "+c.transform.position.z+"), last=("+lastPostn.x+", "+lastPostn.z+")");
+				
 			} else {
-				Debug.Log ("*********DID NOT ADD CHAR TO FORCE GRAPH**********");
+				if (positionOnStage(lastPostn)) {
+				
+					// if onstage, add to graph & make moveable or not based on pickup location & type
+					newNode = new Node(c.name, c.name, "char", lastPostn.x, lastPostn.z, null, c);
+				
+					// add targets if exist for the last movement
+					GameObject lastTarget = c.getLastTarget();
+					if (lastTarget != null && !(isAChar (lastTarget.name))) { // !(lastTarget.name == "Hamlet" || lastTarget.name == "Horatio" || lastTarget.name == "GraveDigger" || lastTarget.name == "GraveDiggerTwo")) {
+							// add target to graph
+							newTarget = new Node(lastTarget.name, lastTarget.name, "target", lastTarget.transform.position.x, lastTarget.transform.position.z, null);
+							g.AddEdge(newNode.fvert, newTarget.fvert, "target");
+					}
+					if(lastPostn == c.thisChar.transform.position) {
+						if (c.lastmoveToObj == null) {
+							// isn't moving, so add target as their current position so they don't move too far
+							newTarget = new Node(c.name+"-current postn", c.name+"-current postn", "target", lastPostn.x, lastPostn.z, null);
+							g.AddEdge (newNode.fvert, newTarget.fvert, "target");
+						} else {
+							// had a previous target, so keep it
+							newTarget = new Node(c.name+"-old target", c.name+"-old target", "target", c.lastmoveToObj.transform.position.x, c.lastmoveToObj.transform.position.z, null);
+							g.AddEdge (newNode.fvert, newTarget.fvert, "target");
+						}
+					}
+					Debug.Log("          "+c.name+", cur=("+c.transform.position.x+", "+c.transform.position.z+"), last=("+lastPostn.x+", "+lastPostn.z+") target="+lastTarget);
+				} else {
+					Debug.Log ("*********DID NOT ADD CHAR TO FORCE GRAPH**********");
+				}
 			}
 			
 			
@@ -372,6 +382,12 @@ public class Forces : MonoBehaviour {
 		foreach (FVertex curChar in g.characters) {
 			if (curChar.Data.name != f.Data.name) {
 				Forces.g.AddEdge (f, curChar, "character");
+			}
+		}
+		if (g.humans.Count > 0) { // link everyone to the human!!!
+			if (f.Data.name != g.humans[0].Data.name) {
+				Forces.g.AddEdge (f, g.humans[0], "human");
+				Debug.Log ("Added link to human");
 			}
 		}
 	}

@@ -4,8 +4,8 @@ C	x	LADYBRACKNELL	-15	30	0	-1	0	0	null	REDMat	1	Kathy
 H	x	MISSPRISM	-5	25	0	-1	0	0	null	YELLOWMat	2	Vicki
 C	x	GWENDOLEN	-10	13	0	-1	0	0	null	GREENMat	3	Victoria
 C	x	CHASUBLE	0	20	0	-1	0	0	null	PURPLEMat	4	Fred
-C	x	ALGERNON	-15	8	0	-1	0	0	null	PINKMat	5	Bruce
-C	x	CECILY	-15	13	0	-1	0	0	null	CYANMat	6	Princess
+C	x	ALGERNON	-15	13	0	-1	0	0	null	PINKMat	5	Bruce
+C	x	CECILY	-15	8	0	-1	0	0	null	CYANMat	6	Princess
 M	x	CHAIR	25	25	Yellow
 M	x	TABLE	-10	20	Blue
 M	x	COUCH	-5	15	Green
@@ -23,3 +23,4 @@ M	x	STAGELEFT	-50	37	Transparent
 M	x	UPSTAGE	0	0	Transparent
 M	x	BACKSTAGERIGHT	50	-5	Transparent
 T	ErnestLegend
+X	x	JACK	HANDBAG
